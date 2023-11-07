@@ -398,8 +398,6 @@ insert into "products_categories"("categories_id", "products_id")values
 (5, 4),
 (5, 5)
 
-select * from "products_categories";
-
 
 
 
@@ -407,7 +405,7 @@ select * from "products_categories";
 --update table products, jika category made to order stock menjadi null :
 update "products" set "stock" = 30;
 
---cara membaca = in (id, id, id, id) => id bekerja seperti or, proses dalam kurung akan menghasilkan beberapa id
+--cara membaca => in (id, id, id, id) => id bekerja seperti or. proses dalam kurung akan menghasilkan beberapa id
 update "products" set "stock" = null where id in (
 	select "p"."id" from "products" "p"
 	join "products_categories" "pc" on ("pc"."products_id" = "p"."id")
@@ -418,6 +416,12 @@ update "products" set "stock" = null where id in (
 select "p"."name", "p"."stock", "c"."name" as "category" from "products" "p"
 join "products_categories" "pc" on ("pc"."products_id" = "p"."id")
 join "categories" "c" on ("c"."id" = "pc"."categories_id");
+
+
+
+
+--update table products, mengatur column is_available dengan true :
+update "products" set "is_available" = true;
 
 
 
@@ -454,8 +458,38 @@ group by "c"."name";
 
 
 
---left join = mengembalikan semua nilai dari table kiri (table pertama yg di sebutkan) dan hanya mengembalikan nilai yang sesuai di dari table kanan
-insert into "promo"("name", "min_price")
+
+
+--left join = mengembalikan semua nilai dari table kiri (table products) walaupun tidak berkaitan/berelasi dengan table kanan (table promo)
+insert into "promo"("name", "min_price", "max_discount", "percentage") values 
+('coffetime15', 80000, 15000, 0.15);
+
+select "p"."name", "pr"."name" as "voucher code" from "products" "p"
+left join "orders_products" "op" on ("op"."products_id" = "p"."id")
+left join "orders" "o" on ("o"."id" = "op"."orders_id")
+left join "promo" "pr" on ("pr"."id" = "o"."promo_id")
+
+
+--right join = mengembalikan semua nilai dari table kanan (table promo) walaupun tidak berkaitan/berelasi dengan table kiri (table products)
+select "p"."name", "pr"."name" as "voucher code" from "products" "p"
+right join "orders_products" "op" on ("op"."products_id" = "p"."id")
+right join "orders" "o" on ("o"."id" = "op"."orders_id")
+right join "promo" "pr" on ("pr"."id" = "o"."promo_id")
+
+
+--outer join = mengembalikan semua nilai dari table kiri (table products) dan table kanan (table promo) yang berkaitan ataupun yang tidak berkaitan
+select "p"."name", "pr"."name" as "voucher code" from "products" "p"
+full outer join "orders_products" "op" on ("op"."products_id" = "p"."id")
+full outer join "orders" "o" on ("o"."id" = "op"."orders_id")
+full outer join "promo" "pr" on ("pr"."id" = "o"."promo_id")
+
+
+--inner join = hanya mengembalikan nilai dari table kiri (table products) dan table kanan (table promo) yang saling berkaitan
+select "p"."name", "pr"."name" as "voucher code" from "products" "p"
+join "orders_products" "op" on ("op"."products_id" = "p"."id")
+join "orders" "o" on ("o"."id" = "op"."orders_id")
+join "promo" "pr" on ("pr"."id" = "o"."promo_id")
+
 
 
 
