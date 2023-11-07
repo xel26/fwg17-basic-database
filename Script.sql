@@ -261,11 +261,19 @@ select * from "promo";
 --mengambil/query semua data tabel orders_products :
 select * from "orders_products";
 
+
+
+
+
+
 --query Product berdasarkan nama, kategori, promo dan harga :
 select p.name, p.category, pro.name as promo, p.price, o.id as order_id from "products" as p
 join "orders_products" as op on (p.id = op.products_id)
 join "orders" as o on (op.orders_id = o.id)
 join "promo" as pro on (o.promo_id = pro.id)
+where p.name = 'Americano' and p.category = 'drink' and pro.name = 'Save10' and p.price = 60000;
+
+
 
 
 
