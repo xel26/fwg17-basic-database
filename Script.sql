@@ -494,6 +494,45 @@ join "promo" "pr" on ("pr"."id" = "o"."promo_id")
 
 
 
+--update table orders_products, menambahkan column quantity :
+alter table "orders_products" add column "quantity" int;
+
+update "orders_products" set "quantity" = 1;
+
+
+
+
+--transaction :
+start transaction
+
+insert into "products"("name", "price", "stock", "description", "is_available") values 
+('Iced Mocha', 35000, null, 'A mixture of espresso, chocolate, and milk, served cold', true)
+
+insert into "products_categories"("categories_id", "products_id") values 
+(1, 18),
+(2, 18),
+(5, 18)
+
+insert into "orders"("total", "user_id") values 
+(175000, 4)
+
+update "orders" set "discount" = "total" * 0.15, "promo_id" = 4
+where id = 21;
+
+update "orders" set "discount" = 15000
+where "discount" >= 15000 and "promo_id" = 4
+
+update "orders" set "total_payment" = "total" - "discount"
+where "id" = 21
+
+insert into "orders_products"("orders_id", "products_id", "quantity") values 
+(21, 18, 5)
+
+commit
+
+
+
+
 
 --mengambil/query semua data table products :
 select * from "products" order by "id";
@@ -505,10 +544,13 @@ select * from "products" where name = 'Latte';
 select * from "users";
 
 --mengambil/query semua data table orders :
-select * from "orders";
+select * from "orders" order by "id";
 
 --mengambil/query semua data table promo :
 select * from "promo";
+
+--mengambil/query semua data table promo :
+select * from "categories";
 
 --mengambil/query semua data tabel orders_products :
 select * from "orders_products";
