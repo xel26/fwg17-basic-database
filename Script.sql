@@ -243,29 +243,6 @@ insert into "orders_products"("orders_id", "products_id") values
 
 
 
---mengambil/query semua data table products :
-select * from "products";
-
---query table products berdasarkan nama :
-select * from "products" where name = 'Latte';
-
---mengambil/query semua data table users :
-select * from "users";
-
---mengambil/query semua data table orders :
-select * from "orders";
-
---mengambil/query semua data table promo :
-select * from "promo";
-
---mengambil/query semua data tabel orders_products :
-select * from "orders_products";
-
-
-
-
-
-
 --query Product berdasarkan nama, kategori, promo dan harga :
 select p.name, p.category, pro.name as promo, p.price, o.id as order_id from "products" as p
 join "orders_products" as op on (p.id = op.products_id)
@@ -284,3 +261,223 @@ select * from products order by name asc limit 5 offset 0;
 
 --tampilkan 5 product terakhir lewati 5 product pertama urutkan berdasarkan harga secara ascending lalu id secara ascending jika ada data harga yang sama:
 select * from products order by price asc, id asc limit 5 offset 5;
+
+
+
+
+
+--ganti nama column "max_discon" jadi "max_discount" di table "promo :
+alter table "promo" rename column "max_discon" to "max_discount"
+
+
+
+
+
+--update table products, mengganti type column deskripsi dari varchar menjadi text, menambah column is_available dengan type boolean:
+alter table "products" alter column "description" type text;
+alter table "products" add column "is_available" boolean;
+
+
+
+
+
+--update table products, mengganti type data price dari int menjadi numeric, menghapus column category, menghapus constraint not null di column stock:
+alter table "products" alter column "price" type numeric(12,2)
+alter table "products" drop column "category"
+alter table "products" alter column "stock" drop not null;
+
+
+
+
+--tambah generic column created_at, updated_at di semua table :
+alter table "orders" add column "created_at" timestamp default now();
+alter table "orders" add column "updated_at" timestamp;
+alter table "promo" add column "created_at" timestamp default now();
+alter table "promo" add column "updated_at" timestamp;
+alter table "users" add column "created_at" timestamp default now();
+alter table "users" add column "updated_at" timestamp;
+
+
+
+
+
+--update table promo, ganti type min_price dan max_discount dengan numeric, ganti nama column promo dengan percentage, ganti type data column percentage dari numeric menjadi float :
+alter table "promo" alter column "min_price" type numeric(12,2);
+alter table "promo" alter column "max_discount" type numeric(12,2);
+alter table "promo" rename column "promo" to "percentage";
+alter table "promo" alter column "percentage" type float;
+
+
+
+--menghapus tipe data enum untuk product :
+drop type category_product;
+
+
+
+
+--membuat table categories :
+create table "categories"(
+	"id" serial primary key,
+	"name" varchar(50),
+	"description" text,
+	"created_at" timestamp default now(),
+	"updated_at" timestamp
+)
+
+
+
+
+--input data table categories :
+insert into "categories"("name", "description") values 
+('Coffe', 'Savor a variety of expertly crafted coffees, from cappuccinos to espressos'),
+('Beverages', 'Explore a range of drinks to suit every taste, along with our coffee specialties'),
+('Sweet Delight', 'Indulge in delectable desserts, including a variety of cakes, for the perfect sweet ending');
+
+
+
+insert into "categories"("name", "description") values 
+('ready to serve', 'Quick and convenient options for coffee and food.'),
+('made to order', 'Personalized dishes prepared just for you')
+
+
+select * from "categories";
+
+
+
+--membuat table penghubung many to many untuk products dan categories :
+create table "products_categories"(
+	"id" serial primary key,
+	"categories_id" int references "categories" ("id"),
+	"products_id" int references "products" ("id"),
+	"created_at" timestamp default now(),
+	"updated_at" timestamp
+)
+
+
+
+
+--input data products :
+insert into "products"("name", "price", "description") values 
+('Canned Coffee', 45000, 'A convenient coffee boost in a can'),
+('Bottled Water', 25000, 'Pure hydration on the go')
+
+
+
+
+--input data table products_categories :
+insert into "products_categories"("categories_id", "products_id")values 
+(1, 1),
+(1, 2),
+(1, 3),
+(1, 4),
+(1, 5),
+(1, 12),
+(2, 1),
+(2, 2),
+(2, 3),
+(2, 3),
+(2, 4),
+(2, 5),
+(2, 12),
+(2, 13),
+(3, 6),
+(3, 7),
+(3, 8),
+(3, 9),
+(3, 10),
+(4, 6),
+(4, 7),
+(4, 8),
+(4, 9),
+(4, 10),
+(4, 12),
+(4, 13),
+(5, 1),
+(5, 2),
+(5, 3),
+(5, 4),
+(5, 5)
+
+select * from "products_categories";
+
+
+
+
+
+--update table products, jika category made to order stock menjadi null :
+update "products" set "stock" = 30;
+
+--cara membaca = in (id, id, id, id) => id bekerja seperti or, proses dalam kurung akan menghasilkan beberapa id
+update "products" set "stock" = null where id in (
+	select "p"."id" from "products" "p"
+	join "products_categories" "pc" on ("pc"."products_id" = "p"."id")
+	join "categories" "c" on ("c"."id" = "pc"."categories_id")
+	where "c"."name" = 'made to order'
+)
+
+select "p"."name", "p"."stock", "c"."name" as "category" from "products" "p"
+join "products_categories" "pc" on ("pc"."products_id" = "p"."id")
+join "categories" "c" on ("c"."id" = "pc"."categories_id");
+
+
+
+
+
+--update table users, menambah column gender :
+create type "gender_category" as enum ('female', 'male');
+
+alter table "users" add column "gender" gender_category;
+
+update "users" set "gender" = 'male';
+
+update "users" set "gender" = 'female' where id = 4 or id = 2;
+
+
+
+
+
+
+
+
+--aggregate function :
+select "c"."name" as "category", 
+		count("p"."id") as "total products",
+		round(avg("p"."price"), 0) as "average price",
+		min("p"."price") as "minimun price",
+		max("p"."price") as "maximun price"
+from "products" "p"
+join "products_categories" "pc" on ("pc"."products_id" = "p"."id")
+join "categories" "c" on ("c"."id" = "pc"."categories_id")
+group by "c"."name";
+
+
+
+
+
+--left join = mengembalikan semua nilai dari table kiri (table pertama yg di sebutkan) dan hanya mengembalikan nilai yang sesuai di dari table kanan
+insert into "promo"("name", "min_price")
+
+
+
+
+
+--mengambil/query semua data table products :
+select * from "products" order by "id";
+
+--query table products berdasarkan nama :
+select * from "products" where name = 'Latte';
+
+--mengambil/query semua data table users :
+select * from "users";
+
+--mengambil/query semua data table orders :
+select * from "orders";
+
+--mengambil/query semua data table promo :
+select * from "promo";
+
+--mengambil/query semua data tabel orders_products :
+select * from "orders_products";
+
+--mengambil/query semua data tabel products_categories :
+select * from "products_categories";
